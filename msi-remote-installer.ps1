@@ -20,6 +20,14 @@ $computers = Import-Csv -Path $csv | Select-Object -ExpandProperty ComputerName
 
 $scriptBlock = {
 	Start-Process -FilePath msiexec -ArgumentList “/i $using:msi /quiet” -Wait
+
+	$installPath = "" # will update to not be manual
+		$shortcutDestination = "C:\Users\Public\Desktop\Lockdown Browser.lnk"
+
+		$shell = New-Object -COMObject WScript.shell
+		$shortcut = $shell.CreateShortcut($ShortcutDestination)
+		$shortcut.TargetPath = $installPath
+		$shortcut.Save()
 }
 
 foreach ($remoteComputer in $computers) {
@@ -36,18 +44,4 @@ foreach ($remoteComputer in $computers) {
 	catch {
 		Write-Host "Failed to install on $remoteComputer. Error: $($_.Exception.Message)"
 	}
-
-	try {
-		$installPath = ""
-		$shortcutDestination = "C:\Users\Student\Desktop\Lockdown Browser.lnk"
-
-		$WshShell = New-Object -COMObject WScript.Shell
-		$Shortcut = $WshShell.CreateShortcut($ShortcutDestination)
-		$Shortcut.TargetPath = $installPath
-		$Shortcut.Save()
-	}
-	catch {
-		Write-Host "Failed to create shortcut on $remoteComputer. Error: $($_.Exception.Message)"
-	}
-
 }
