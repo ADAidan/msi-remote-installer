@@ -16,10 +16,19 @@ param(
     [string]$msi
 )
 
+if ([string]::IsNullOrWhiteSpace($csv) -or
+    [string]::IsNullOrWhiteSpace($msi)) {
+		$scriptName = $MyInvocation.MyCommand.Name
+		Write-Host "Usage: .\$scriptName -csv <path-to-csv> -msi <path-to-msi>"
+		Write-Host "Example: .\$scriptName -csv 'C:\remotelist.csv' -msi '\\server\share\install.msi'"
+		exit 1
+	}
+
 $computers = Import-Csv -Path $csv | Select-Object -ExpandProperty ComputerName
 
 $scriptBlock = {
-	Start-Process -FilePath msiexec -ArgumentList “/i $using:msi /quiet” -Wait
+	$installerPath = $using:msi
+	Start-Process -FilePath msiexec -ArgumentList “/i '"$installerPath"' /quiet” -Wait
 
 	$installPath = "" # will update to not be manual
 		$shortcutDestination = "C:\Users\Public\Desktop\Lockdown Browser.lnk"
@@ -31,13 +40,6 @@ $scriptBlock = {
 }
 
 foreach ($remoteComputer in $computers) {
-	if ([string]::IsNullOrWhiteSpace($csv) -or
-    [string]::IsNullOrWhiteSpace($msi)) {
-		$scriptName = $MyInvocation.MyCommand.Name
-		Write-Host "Usage: .\$scriptName -csv <path-to-csv> -msi <path-to-msi>"
-		Write-Host "Example: .\$scriptName -csv 'C:\remotelist.csv' -msi '\\server\share\install.msi'"
-		exit 1
-	}
 	try {
 		Invoke-Command -computerName $remoteComputer -ScriptBlock $scriptBlock -Credential (Get-Credential)
 	}
