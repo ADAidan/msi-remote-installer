@@ -28,15 +28,23 @@ $computers = Import-Csv -Path $csv | Select-Object -ExpandProperty ComputerName
 
 $scriptBlock = {
 	$installerPath = $using:msi
-	Start-Process -FilePath msiexec -ArgumentList “/i '"$installerPath"' /quiet” -Wait
+	Start-Process -FilePath msiexec -ArgumentList “/i '"$installerPath"' /quiet /norestart” -Wait -PassThru
+
+	if ($process.ExitCode -notin @(0, 3010)) {
+		Write-Host "Installation failed with exit code $($process.ExitCode)"
+		return
+	}
 
 	$installPath = "" # will update to not be manual
-		$shortcutDestination = "C:\Users\Public\Desktop\Lockdown Browser.lnk"
-
-		$shell = New-Object -COMObject WScript.shell
-		$shortcut = $shell.CreateShortcut($ShortcutDestination)
-		$shortcut.TargetPath = $installPath
-		$shortcut.Save()
+	if (-not (Test-Path -LiteralPath $installPath)) {
+        throw "Installed executable not found: $installPath"
+    }
+	
+	$shortcutDestination = "C:\Users\Public\Desktop\Lockdown Browser.lnk"
+	$shell = New-Object -COMObject WScript.shell
+	$shortcut = $shell.CreateShortcut($ShortcutDestination)
+	$shortcut.TargetPath = $installPath
+	$shortcut.Save()
 }
 
 foreach ($remoteComputer in $computers) {
