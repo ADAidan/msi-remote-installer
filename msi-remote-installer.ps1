@@ -51,6 +51,3 @@ foreach ($remoteComputer in $computers) {
 	}
 
 }
-
-# if script does not run
-# Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
